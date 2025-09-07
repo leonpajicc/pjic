@@ -221,8 +221,18 @@ header.nav, main, footer{ position:relative; z-index:1; }
       <a href="#">Contact Us</a>
     </nav>
     <div class="cta">
-      <a class="btn" href="#"><span class="corner-glow glow-tl"></span><span class="corner-glow glow-br"></span>Sign Up</a>
-      <a class="btn" href="#"><span class="corner-glow glow-tl"></span><span class="corner-glow glow-br"></span>Login</a>
+      <a class="btn" id="btnSignup" href="#" data-open-auth="signup"><span class="corner-glow glow-tl"></span><span class="corner-glow glow-br"></span>Sign up</a>
+      <a class="btn" id="btnLogin"  href="#" data-open-auth="login"><span class="corner-glow glow-tl"></span><span class="corner-glow glow-br"></span>Login</a>
+
+      <!-- Logged in state -->
+      <div id="accountWrap" style="display:none; position:relative;">
+        <button class="btn" id="btnAccount">Account</button>
+        <div id="accountMenu" style="display:none; position:absolute; right:0; top:110%; background:#111; border:1px solid #222; border-radius:12px; padding:10px; min-width:220px; z-index:9999;">
+          <div id="accountEmail" style="opacity:.85; padding:6px 8px;">—</div>
+          <hr style="border:none; border-top:1px solid #222; margin:6px 0;">
+          <button id="btnSignOut" class="btn" style="width:100%;">Sign out</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -1274,26 +1284,7 @@ header.nav, main, footer{ position:relative; z-index:1; }
 </style>
 
 <!-- Login Modal -->
-<div id="login-mask" class="lg-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="lg-title">
-  <div class="lg-scrim"></div>
-  <div class="lg-card" tabindex="-1">
-    <div class="lg-head">
-      <div class="lg-title" id="lg-title">Welcome back</div>
-      <button class="lg-close" type="button" aria-label="Close login">&times;</button>
-    </div>
-    <div class="lg-body">
-      <div class="field" id="field-email">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5Z" fill="currentColor"/></svg>
-        <input id="lg-email" type="email" placeholder="Email" autocomplete="username" inputmode="email" />
-      </div>
-      <div class="field" id="field-pass">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 8V7a5 5 0 1 0-10 0v1H5v12h14V8h-2Zm-8 0V7a3 3 0 1 1 6 0v1H9Zm0 5h6v5H9v-5Z" fill="currentColor"/></svg>
-        <input id="lg-pass" type="password" placeholder="Password" autocomplete="current-password" />
-      </div>
-      <div class="lg-actions" id="lg-actions-slot"><!-- cloned site button goes here --></div>
-    </div>
-  </div>
-</div>
+
 
 <script>
 (function(){
@@ -1430,6 +1421,199 @@ header.nav, main, footer{ position:relative; z-index:1; }
 </script>
 <!-- SLIDER+LOGIN END -->
 
+
+
+  <!-- AUTH MASK / OVERLAY (Login + Sign up) -->
+  <div id="authMask" style="display:none; position:fixed; inset:0; z-index:10000;">
+    <div style="position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);"></div>
+    <div style="position:relative; max-width:460px; margin:8vh auto; background:#0e0e0e; border:1px solid #1b1b1b; border-radius:16px; padding:22px; color:#fff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h2 id="authTitle" style="margin:0; font-size:22px;">Login</h2>
+        <button id="authClose" class="btn" aria-label="Close">×</button>
+      </div>
+
+      <div style="display:flex; gap:8px; margin:12px 0 18px;">
+        <button class="btn" id="tabLogin">Login</button>
+        <button class="btn" id="tabSignup" style="opacity:.9;">Sign up</button>
+      </div>
+
+      <!-- Login form -->
+      <form id="formLogin" autocomplete="on">
+        <label style="display:block;">Email
+          <input id="loginEmail" type="email" required style="width:100%; padding:10px; margin:6px 0 10px; border-radius:10px; border:1px solid #222; background:#111; color:#fff;">
+        </label>
+        <label style="display:block;">Password
+          <input id="loginPass" type="password" required style="width:100%; padding:10px; margin:6px 0 14px; border-radius:10px; border:1px solid #222; background:#111; color:#fff;">
+        </label>
+        <button class="btn" type="submit" style="width:100%;">Login</button>
+      </form>
+
+      <!-- Sign up form -->
+      <form id="formSignup" style="display:none;" autocomplete="on">
+        <label style="display:block;">Display name
+          <input id="suName" type="text" minlength="2" required style="width:100%; padding:10px; margin:6px 0 10px; border-radius:10px; border:1px solid #222; background:#111; color:#fff;">
+        </label>
+        <label style="display:block;">Email
+          <input id="suEmail" type="email" required style="width:100%; padding:10px; margin:6px 0 10px; border-radius:10px; border:1px solid #222; background:#111; color:#fff;">
+        </label>
+        <label style="display:block;">Password
+          <input id="suPass" type="password" minlength="6" required style="width:100%; padding:10px; margin:6px 0 14px; border-radius:10px; border:1px solid #222; background:#111; color:#fff;">
+        </label>
+        <button class="btn" type="submit" style="width:100%;">Create account</button>
+      </form>
+
+      <p id="authMsg" style="margin-top:12px; color:#bbb; min-height:1.2em;"></p>
+    </div>
+  </div>
+
+  <!-- Firebase Email/Password auth -->
+  <script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCmD8303tX80O8ZQfJkQmlZ8z_bMAoajJo",
+  authDomain: "pjic-9ed7c.firebaseapp.com",
+  projectId: "pjic-9ed7c",
+  storageBucket: "pjic-9ed7c.firebasestorage.app",
+  messagingSenderId: "443451394264",
+  appId: "1:443451394264:web:c8159e12565853d3e0efad",
+  measurementId: "G-YX3LB4GJ0Y"
+};
+
+initializeApp(firebaseConfig);
+const auth = getAuth();
+
+/* DOM refs */
+const btnLogin = document.getElementById('btnLogin');
+const btnSignup = document.getElementById('btnSignup');
+const accountWrap= document.getElementById('accountWrap');
+const btnAccount= document.getElementById('btnAccount');
+const accountMenu= document.getElementById('accountMenu');
+const accountEmail= document.getElementById('accountEmail');
+const btnSignOut= document.getElementById('btnSignOut');
+
+const mask = document.getElementById('authMask');
+const authClose = document.getElementById('authClose');
+const tabLogin = document.getElementById('tabLogin');
+const tabSignup = document.getElementById('tabSignup');
+const authTitle = document.getElementById('authTitle');
+const formLogin = document.getElementById('formLogin');
+const formSignup= document.getElementById('formSignup');
+const loginEmail= document.getElementById('loginEmail');
+const loginPass = document.getElementById('loginPass');
+const suName= document.getElementById('suName');
+const suEmail= document.getElementById('suEmail');
+const suPass = document.getElementById('suPass');
+const msg = document.getElementById('authMsg');
+
+/* Helpers */
+const show = el => el && (el.style.display = '');
+const hide = el => el && (el.style.display = 'none');
+const setText = (el, t='') => el && (el.textContent = t);
+
+/* Tabs + modal */
+function toLogin(){ if(authTitle) authTitle.textContent='Login'; show(formLogin); hide(formSignup); }
+function toSignup(){ if(authTitle) authTitle.textContent='Sign up'; show(formSignup); hide(formLogin); }
+
+function openMask(which='login'){
+  if(!mask){ console.warn('[auth] #authMask not found'); return; }
+  show(mask);
+  setText(msg, '');
+  which==='signup' ? toSignup() : toLogin();
+}
+
+function closeMask(){ hide(mask); setText(msg,''); }
+
+/* Robust open handlers */
+// 1) Generic data attribute (works for any element you add later)
+document.querySelectorAll('[data-open-auth]').forEach(el=>{
+  el.addEventListener('click', e=>{
+    e.preventDefault();
+    openMask(el.getAttribute('data-open-auth') || 'login');
+  });
+});
+// 2) Explicit by ID (fixes cases where data attribute is missing)
+btnLogin?.addEventListener('click', e=>{ e.preventDefault(); openMask('login'); });
+btnSignup?.addEventListener('click', e=>{ e.preventDefault(); openMask('signup'); });
+
+/* Close + backdrop */
+authClose?.addEventListener('click', closeMask);
+mask?.addEventListener('click', e=>{ if(e.target===mask) closeMask(); });
+tabLogin?.addEventListener('click', toLogin);
+tabSignup?.addEventListener('click', toSignup);
+
+/* Login */
+formLogin?.addEventListener('submit', async e=>{
+  e.preventDefault();
+  setText(msg, 'Logging in…');
+  try{
+    await signInWithEmailAndPassword(auth, (loginEmail?.value||'').trim(), loginPass?.value||'');
+    closeMask();
+  }catch(err){ setText(msg, prettify(err)); }
+});
+
+/* Sign up */
+formSignup?.addEventListener('submit', async e=>{
+  e.preventDefault();
+  setText(msg,'Creating account…');
+  try{
+    const { user } = await createUserWithEmailAndPassword(auth, (suEmail?.value||'').trim(), suPass?.value||'');
+    const name = (suName?.value||'').trim();
+    if(name){ await updateProfile(user, { displayName: name }); }
+    closeMask();
+  }catch(err){ setText(msg, prettify(err)); }
+});
+
+/* Session state */
+onAuthStateChanged(auth, user=>{
+  if(user){
+    hide(btnLogin); hide(btnSignup); show(accountWrap);
+    const name = user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
+    if(btnAccount) btnAccount.textContent = `Account (${name})`;
+    if(accountEmail) accountEmail.textContent = user.email || '';
+  }else{
+    show(btnLogin); show(btnSignup); hide(accountWrap); hide(accountMenu);
+  }
+});
+
+/* Account dropdown + sign out */
+btnAccount?.addEventListener('click', ()=>{
+  const open = accountMenu && accountMenu.style.display !== 'none';
+  if(accountMenu){
+    accountMenu.style.display = open ? 'none' : '';
+    btnAccount?.setAttribute('aria-expanded', String(!open));
+  }
+});
+btnSignOut?.addEventListener('click', async ()=>{
+  await signOut(auth);
+  if(accountMenu) accountMenu.style.display = 'none';
+});
+
+/* Error prettifier */
+function prettify(err){
+  const code = (err?.code||'').replace('auth/','');
+  const map = {
+    'invalid-email': 'Email address looks wrong.',
+    'user-not-found': 'No account with that email.',
+    'wrong-password': 'Incorrect password.',
+    'weak-password': 'Password must be at least 6 characters.',
+    'email-already-in-use': 'That email is already registered.',
+    'too-many-requests': 'Too many attempts. Try again later.'
+  };
+  return map[code] || err?.message || 'Something went wrong.';
+}
+
+</script>
 
 </body>
 </html>

@@ -1,3 +1,4 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -8,7 +9,7 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ✅ Your Firebase config
+// Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCmD8303tX80O8ZQfJkQmlZ8z_bMAoajJo",
   authDomain: "pjic-9ed7c.firebaseapp.com",
@@ -19,81 +20,125 @@ const firebaseConfig = {
   measurementId: "G-YX3LB4GJ0Y"
 };
 
-// Init
 initializeApp(firebaseConfig);
 const auth = getAuth();
 
-/* --- DOM refs --- */
+/* DOM refs */
 const btnLogin = document.getElementById('btnLogin');
 const btnSignup = document.getElementById('btnSignup');
-const accountWrap = document.getElementById('accountWrap');
-const btnAccount = document.getElementById('btnAccount');
-const accountMenu = document.getElementById('accountMenu');
-const accountEmail = document.getElementById('accountEmail');
-const btnSignOut = document.getElementById('btnSignOut');
+const accountWrap= document.getElementById('accountWrap');
+const btnAccount= document.getElementById('btnAccount');
+const accountMenu= document.getElementById('accountMenu');
+const accountEmail= document.getElementById('accountEmail');
+const btnSignOut= document.getElementById('btnSignOut');
 
 const mask = document.getElementById('authMask');
 const authClose = document.getElementById('authClose');
+const tabLogin = document.getElementById('tabLogin');
+const tabSignup = document.getElementById('tabSignup');
+const authTitle = document.getElementById('authTitle');
 const formLogin = document.getElementById('formLogin');
-const formSignup = document.getElementById('formSignup');
-const loginEmail = document.getElementById('loginEmail');
+const formSignup= document.getElementById('formSignup');
+const loginEmail= document.getElementById('loginEmail');
 const loginPass = document.getElementById('loginPass');
-const suName = document.getElementById('suName');
-const suEmail = document.getElementById('suEmail');
+const suName= document.getElementById('suName');
+const suEmail= document.getElementById('suEmail');
 const suPass = document.getElementById('suPass');
 const msg = document.getElementById('authMsg');
 
-/* --- helpers --- */
+/* Helpers */
 const show = el => el && (el.style.display = '');
 const hide = el => el && (el.style.display = 'none');
 const setText = (el, t='') => el && (el.textContent = t);
 
-/* --- open/close mask --- */
+/* Tabs + modal */
+function toLogin(){ if(authTitle) authTitle.textContent='Login'; show(formLogin); hide(formSignup); }
+function toSignup(){ if(authTitle) authTitle.textContent='Sign up'; show(formSignup); hide(formLogin); }
+
+function openMask(which='login'){
+  if(!mask){ console.warn('[auth] #authMask not found'); return; }
+  show(mask);
+  setText(msg, '');
+  which==='signup' ? toSignup() : toLogin();
+}
+
+function closeMask(){ hide(mask); setText(msg,''); }
+
+/* Robust open handlers */
+// 1) Generic data attribute (works for any element you add later)
 document.querySelectorAll('[data-open-auth]').forEach(el=>{
   el.addEventListener('click', e=>{
     e.preventDefault();
-    show(mask);
-    if(el.dataset.openAuth==='signup'){ show(formSignup); hide(formLogin); }
-    else{ show(formLogin); hide(formSignup); }
+    openMask(el.getAttribute('data-open-auth') || 'login');
   });
 });
-authClose?.addEventListener('click', ()=>hide(mask));
-mask?.addEventListener('click', e=>{ if(e.target===mask) hide(mask); });
+// 2) Explicit by ID (fixes cases where data attribute is missing)
+btnLogin?.addEventListener('click', e=>{ e.preventDefault(); openMask('login'); });
+btnSignup?.addEventListener('click', e=>{ e.preventDefault(); openMask('signup'); });
 
-/* --- login --- */
+/* Close + backdrop */
+authClose?.addEventListener('click', closeMask);
+mask?.addEventListener('click', e=>{ if(e.target===mask) closeMask(); });
+tabLogin?.addEventListener('click', toLogin);
+tabSignup?.addEventListener('click', toSignup);
+
+/* Login */
 formLogin?.addEventListener('submit', async e=>{
   e.preventDefault();
-  setText(msg,'Logging in…');
+  setText(msg, 'Logging in…');
   try{
-    await signInWithEmailAndPassword(auth, loginEmail.value, loginPass.value);
-    hide(mask);
-  }catch(err){ setText(msg, err.message); }
+    await signInWithEmailAndPassword(auth, (loginEmail?.value||'').trim(), loginPass?.value||'');
+    closeMask();
+  }catch(err){ setText(msg, prettify(err)); }
 });
 
-/* --- signup --- */
+/* Sign up */
 formSignup?.addEventListener('submit', async e=>{
   e.preventDefault();
   setText(msg,'Creating account…');
   try{
-    const { user } = await createUserWithEmailAndPassword(auth, suEmail.value, suPass.value);
-    await updateProfile(user, { displayName: suName.value });
-    hide(mask);
-  }catch(err){ setText(msg, err.message); }
+    const { user } = await createUserWithEmailAndPassword(auth, (suEmail?.value||'').trim(), suPass?.value||'');
+    const name = (suName?.value||'').trim();
+    if(name){ await updateProfile(user, { displayName: name }); }
+    closeMask();
+  }catch(err){ setText(msg, prettify(err)); }
 });
 
-/* --- auth state --- */
+/* Session state */
 onAuthStateChanged(auth, user=>{
   if(user){
     hide(btnLogin); hide(btnSignup); show(accountWrap);
-    btnAccount.textContent = `Account (${user.displayName || user.email.split('@')[0]})`;
-    accountEmail.textContent = user.email;
+    const name = user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
+    if(btnAccount) btnAccount.textContent = `Account (${name})`;
+    if(accountEmail) accountEmail.textContent = user.email || '';
   }else{
     show(btnLogin); show(btnSignup); hide(accountWrap); hide(accountMenu);
   }
 });
 
-/* --- account menu --- */
+/* Account dropdown + sign out */
 btnAccount?.addEventListener('click', ()=>{
-  accountMenu.style.display = accountMenu.style.display==='none' ? '' : 'none';
+  const open = accountMenu && accountMenu.style.display !== 'none';
+  if(accountMenu){
+    accountMenu.style.display = open ? 'none' : '';
+    btnAccount?.setAttribute('aria-expanded', String(!open));
+  }
 });
-btnSignOut?.addEventListener('click', ()=> signOut(auth));
+btnSignOut?.addEventListener('click', async ()=>{
+  await signOut(auth);
+  if(accountMenu) accountMenu.style.display = 'none';
+});
+
+/* Error prettifier */
+function prettify(err){
+  const code = (err?.code||'').replace('auth/','');
+  const map = {
+    'invalid-email': 'Email address looks wrong.',
+    'user-not-found': 'No account with that email.',
+    'wrong-password': 'Incorrect password.',
+    'weak-password': 'Password must be at least 6 characters.',
+    'email-already-in-use': 'That email is already registered.',
+    'too-many-requests': 'Too many attempts. Try again later.'
+  };
+  return map[code] || err?.message || 'Something went wrong.';
+}
